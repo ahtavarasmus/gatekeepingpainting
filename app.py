@@ -13,6 +13,14 @@ import replicate
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Set a secret key for session management
 
+# Add no-cache headers to all responses
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
 # List of Harry Potter themed passwords
 PASSWORDS = [
     "alohomora",    # Unlocking spell
@@ -79,12 +87,10 @@ def run_async(func):
 
 @app.route('/')
 def index():
-    # Clear all caches and session
     global flux_image_cache
-    flux_image_cache = {}  # Clear the Flux image cache
-    session.clear()  # Clear the session
-    
-    # Set a new random password
+    flux_image_cache = {}
+    session.clear()
+    # Always generate a new password for each visit
     session['password'] = random.choice(PASSWORDS)
     
     # Generate new image
@@ -178,5 +184,5 @@ def get_password_response_video():
     })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True, port=5002)
 
