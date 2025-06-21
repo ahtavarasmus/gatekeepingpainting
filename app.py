@@ -1,7 +1,8 @@
 import base64
 import os
+import random
 from pathlib import Path
-from flask import Flask, render_template, redirect, jsonify, request
+from flask import Flask, render_template, redirect, jsonify, request, session
 from dotenv import load_dotenv
 from deepgram import (
     DeepgramClient,
@@ -11,6 +12,23 @@ import asyncio
 from functools import partial
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # Set a secret key for session management
+
+# List of Harry Potter themed passwords
+PASSWORDS = [
+    "alohomora",    # Unlocking spell
+    "lumos",        # Light spell
+    "wingardium",   # Levitation spell
+    "expecto",      # Part of patronus spell
+    "accio",        # Summoning spell
+    "nox",          # Darkness spell
+    "riddikulus",   # Anti-boggart spell
+    "protego",      # Shield spell
+    "leviosa",      # Part of levitation spell
+    "patronus",     # Protection spell
+    "stupefy",      # Stunning spell
+    "expelliarmus", # Disarming spell
+]
 
 def run_async(func):
     """Decorator to run an async function in a synchronous context"""
@@ -30,7 +48,10 @@ def run_async(func):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Set a random password in the session if not already set
+    if 'password' not in session:
+        session['password'] = random.choice(PASSWORDS)
+    return render_template('index.html', password=session['password'])
 
 @app.route('/redirect-to-instagram')
 def redirect_to_instagram():
@@ -96,8 +117,8 @@ def get_password_response_video():
     data = request.get_json()
     transcription = data.get('transcription', '').lower().strip()
     
-    # Check if the transcription matches the password
-    password_correct = transcription == 'password'
+    # Check if the transcription matches the session password
+    password_correct = transcription == session.get('password', '')
     
     if password_correct:
         return jsonify({
