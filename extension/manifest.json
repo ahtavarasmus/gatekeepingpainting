@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "Instagram Interceptor",
+  "version": "1.0",
+  "description": "Temporarily redirects Instagram traffic to local app",
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "*://instagram.com/*",
+    "*://www.instagram.com/*",
+    "http://localhost:5000/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
+}
+
