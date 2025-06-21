@@ -1,7 +1,5 @@
-import base64
 import os
 import random
-from pathlib import Path
 from flask import Flask, render_template, redirect, jsonify, request, session
 from dotenv import load_dotenv
 from deepgram import (
@@ -11,9 +9,6 @@ from deepgram import (
 import asyncio
 from functools import partial
 import replicate
-import requests
-from PIL import Image
-from io import BytesIO
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Set a secret key for session management
@@ -42,7 +37,7 @@ def call_flux_kontext(word):
         word (str): The word to embed in the prompt
         
     Returns:
-        str: Base64 encoded image data URL for direct embedding in HTML
+        str: Direct URL to the generated image
         
     Raises:
         Exception: If image generation fails
@@ -64,24 +59,9 @@ def call_flux_kontext(word):
         
         # Get the image URL from the output
         if isinstance(output, list) and len(output) > 0:
-            image_url = output[0]
+            return output[0]  # Return the direct URL
         else:
             raise Exception("No image URL returned from Flux model")
-        
-        # Download the image
-        response = requests.get(image_url)
-        response.raise_for_status()
-        
-        # Convert to PIL Image
-        image = Image.open(BytesIO(response.content))
-        
-        # Convert to base64 for embedding in HTML
-        buffer = BytesIO()
-        image.save(buffer, format="PNG")
-        img_str = base64.b64encode(buffer.getvalue()).decode()
-        
-        # Return as data URL for direct embedding
-        return f"data:image/png;base64,{img_str}"
         
     except Exception as e:
         print(f"Error generating image with Flux: {str(e)}")
