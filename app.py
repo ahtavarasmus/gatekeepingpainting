@@ -53,6 +53,11 @@ def index():
         session['password'] = random.choice(PASSWORDS)
     return render_template('index.html', password=session['password'])
 
+@app.route('/clear-session', methods=['POST'])
+def clear_session():
+    session.clear()
+    return jsonify({'success': True})
+
 @app.route('/redirect-to-instagram')
 def redirect_to_instagram():
     return redirect('https://www.instagram.com')
@@ -127,7 +132,7 @@ def get_password_response_video():
         })
     
     return jsonify({
-        'video_url': '/static/refusal_try_again.mp4',  # Make sure to place your second video in static folder
+        'video_url': '/static/refusal_try_again_v2.mp4',  # Make sure to place your second video in static folder
         'password_correct': False
     })
 

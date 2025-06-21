@@ -145,7 +145,7 @@
                     mediaRecorder.start();
                     console.log('Started recording...');
                     
-                    // Record for 4 seconds
+                    // Record for 3 seconds
                     setTimeout(() => {
                         if (mediaRecorder && mediaRecorder.state === 'recording') {
                             mediaRecorder.stop();
@@ -153,19 +153,19 @@
                             // Stop all tracks to release the microphone
                             stream.getTracks().forEach(track => track.stop());
                         }
-                    }, 4000);
+                    }, 3000);
                 } catch (err) {
                     console.error('Error accessing microphone:', err);
                 }
             }
 
             // Function to reset the video and variables
-            async function resetVideo() {
+            async function resetVideo(startRecordingImmediately = false) {
                 // Check if it's the first time playing
                 const hasPlayed = localStorage.getItem('hasPlayedOpening');
                 
                 // Set the appropriate video source
-                video.src = hasPlayed ? '/static/waiting_new_try.mp4' : '/static/openning_long.mp4';
+                video.src = hasPlayed ? '/static/waiting_new_try_v2.mp4' : '/static/openning_long.mp4';
                 
                 // If this is the first time, mark it as played
                 if (!hasPlayed) {
@@ -176,6 +176,12 @@
                 try {
                     await video.play();
                     hasCalledVideoApi = false;
+                    
+                    // If this is after a failed attempt, start recording immediately
+                    if (startRecordingImmediately && hasPlayed) {
+                        hasCalledVideoApi = true;
+                        startRecording();
+                    }
                 } catch (err) {
                     console.error('Could not restart video:', err);
                 }
@@ -203,16 +209,47 @@
                     // Start playing the new video
                     await video.play();
 
+                    // If this is the refusal video, set up early transition
+                    if (!data.password_correct) {
+                        // Get video duration once it's loaded
+                        video.addEventListener('loadedmetadata', () => {
+                            const videoDuration = video.duration;
+                            const cutoffTime = videoDuration - 0.5; // Cut off 0.5 seconds early
+                            
+                            // Set up timeupdate listener for early transition
+                            const timeUpdateHandler = () => {
+                                if (video.currentTime >= cutoffTime) {
+                                    video.removeEventListener('timeupdate', timeUpdateHandler);
+                                    resetVideo(true); // Start next video and recording
+                                }
+                            };
+                            video.addEventListener('timeupdate', timeUpdateHandler);
+                        }, { once: true });
+                    }
+
                     // Handle the password check result
                     if (data.password_correct) {
                         // For success, play video for 4 seconds before redirecting
                         console.log('Success video playing, will redirect in 4 seconds');
-                        setTimeout(() => {
+                        setTimeout(async () => {
+                            // Clear localStorage
+                            localStorage.removeItem('hasPlayedOpening');
+                            
+                            // Clear session on the server
+                            try {
+                                await fetch('/clear-session', {
+                                    method: 'POST',
+                                });
+                            } catch (error) {
+                                console.error('Error clearing session:', error);
+                            }
+                            
+                            // Redirect to Instagram
                             window.location.href = '/redirect-to-instagram';
                         }, 4000); // 4000 milliseconds = 4 seconds
                     } else {
-                        // Add ended event listener to loop back to opening video
-                        video.addEventListener('ended', resetVideo, { once: true });
+                        // Add ended event listener to loop back to opening video and start recording
+                        video.addEventListener('ended', () => resetVideo(true), { once: true });
                     }
                 } catch (error) {
                     console.error('Error fetching next video:', error);
