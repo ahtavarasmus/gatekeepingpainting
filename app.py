@@ -45,23 +45,21 @@ def call_flux_kontext(word):
     try:
         # Create a magical Harry Potter themed prompt that embeds the word
         # prompt = f"A wooden plack with a '{word}' in elegant glowing letters, Harry Potter magical style, enchanted atmosphere, golden light, magical particles, ethereal glow, fantasy art, high quality, detailed"
-        prompt = "make the wooden board say '{word}', in intricate carving"
+        prompt = f"make the wooden board say '{word}', in intricate carving"
         input = {
             "prompt": prompt,
             "input_image": "https://replicate.delivery/pbxt/NE8eGvpfKztOdO6dFCbniH3VrMYA2umaV7t2OttsIpoOkS0p/istockphoto-155149525-612x612%281%29.jpg",
             "output_format": "jpg"
         }
-
         output = replicate.run(
             "black-forest-labs/flux-kontext-pro",
             input=input
         )
-        
-        # Get the image URL from the output
-        if isinstance(output, list) and len(output) > 0:
-            return output[0]  # Return the direct URL
+        print(output)
+        if output:
+            return output  # Return the direct URL
         else:
-            raise Exception("No image URL returned from Flux model")
+            return None
         
     except Exception as e:
         print(f"Error generating image with Flux: {str(e)}")
