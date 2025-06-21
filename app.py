@@ -44,11 +44,11 @@ def call_flux_kontext(word):
     """
     try:
         # Create a magical Harry Potter themed prompt that embeds the word
-        prompt = f"A wooden plack with a '{word}' in elegant glowing letters, Harry Potter magical style, enchanted atmosphere, golden light, magical particles, ethereal glow, fantasy art, high quality, detailed"
-        
+        # prompt = f"A wooden plack with a '{word}' in elegant glowing letters, Harry Potter magical style, enchanted atmosphere, golden light, magical particles, ethereal glow, fantasy art, high quality, detailed"
+        prompt = "make the wooden board say '{word}', in intricate carving"
         input = {
             "prompt": prompt,
-            "input_image": "",
+            "input_image": "https://replicate.delivery/pbxt/NE8eGvpfKztOdO6dFCbniH3VrMYA2umaV7t2OttsIpoOkS0p/istockphoto-155149525-612x612%281%29.jpg",
             "output_format": "jpg"
         }
 
