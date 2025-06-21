@@ -10,6 +10,10 @@ from deepgram import (
 )
 import asyncio
 from functools import partial
+import replicate
+import requests
+from PIL import Image
+from io import BytesIO
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Set a secret key for session management
@@ -29,6 +33,60 @@ PASSWORDS = [
     "stupefy",      # Stunning spell
     "expelliarmus", # Disarming spell
 ]
+
+def call_flux_kontext(word):
+    """
+    Generate an image using Replicate Flux model with a word embedded in the prompt.
+    
+    Args:
+        word (str): The word to embed in the prompt
+        
+    Returns:
+        str: Base64 encoded image data URL for direct embedding in HTML
+        
+    Raises:
+        Exception: If image generation fails
+    """
+    try:
+        # Create a magical Harry Potter themed prompt that embeds the word
+        prompt = f"A wooden plack with a '{word}' in elegant glowing letters, Harry Potter magical style, enchanted atmosphere, golden light, magical particles, ethereal glow, fantasy art, high quality, detailed"
+        
+        input = {
+            "prompt": prompt,
+            "input_image": "",
+            "output_format": "jpg"
+        }
+
+        output = replicate.run(
+            "black-forest-labs/flux-kontext-pro",
+            input=input
+        )
+        
+        # Get the image URL from the output
+        if isinstance(output, list) and len(output) > 0:
+            image_url = output[0]
+        else:
+            raise Exception("No image URL returned from Flux model")
+        
+        # Download the image
+        response = requests.get(image_url)
+        response.raise_for_status()
+        
+        # Convert to PIL Image
+        image = Image.open(BytesIO(response.content))
+        
+        # Convert to base64 for embedding in HTML
+        buffer = BytesIO()
+        image.save(buffer, format="PNG")
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        
+        # Return as data URL for direct embedding
+        return f"data:image/png;base64,{img_str}"
+        
+    except Exception as e:
+        print(f"Error generating image with Flux: {str(e)}")
+        # Return a fallback/placeholder image or None
+        return None
 
 def run_async(func):
     """Decorator to run an async function in a synchronous context"""
@@ -51,7 +109,8 @@ def index():
     # Set a random password in the session if not already set
     if 'password' not in session:
         session['password'] = random.choice(PASSWORDS)
-    return render_template('index.html', password=session['password'])
+    hovering_image = call_flux_kontext(session['password'])
+    return render_template('index.html', password=session['password'], hovering_image=hovering_image)
 
 @app.route('/clear-session', methods=['POST'])
 def clear_session():
@@ -137,5 +196,5 @@ def get_password_response_video():
     })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True, port=5001)
 
