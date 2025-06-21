@@ -97,6 +97,9 @@
         }
     </style>
     <script>
+        // Clear localStorage on page load
+        localStorage.clear();
+        
         document.addEventListener('DOMContentLoaded', function() {
 
             const video   = document.getElementById('mainVideo');
@@ -294,7 +297,7 @@
         </video>
         <!-- 4️⃣  A full-screen overlay that the user taps/clicks -->
         <div id="cover" class="cover">
-          <img src="{{ hovering_image }}" alt="Password Image" style="max-width: 80%; max-height: 80%; object-fit: contain;">
+          <img src="{{ hovering_image }}" alt="Password Image" style="max-width: 400px; max-height: 400px; object-fit: contain; position: absolute; bottom: 20px;">
         </div>
         <div class="image-overlay">
             <img src="{{ hovering_image }}" alt="Password Image">

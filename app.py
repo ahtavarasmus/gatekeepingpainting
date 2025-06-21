@@ -79,10 +79,19 @@ def run_async(func):
 
 @app.route('/')
 def index():
-    # Set a random password in the session if not already set
-    if 'password' not in session:
-        session['password'] = random.choice(PASSWORDS)
+    # Clear all caches and session
+    global flux_image_cache
+    flux_image_cache = {}  # Clear the Flux image cache
+    session.clear()  # Clear the session
+    
+    # Set a new random password
+    session['password'] = random.choice(PASSWORDS)
+    
+    # Generate new image
     hovering_image = call_flux_kontext(session['password'])
+    if hovering_image:
+        flux_image_cache[session['password']] = hovering_image
+    
     return render_template('index.html', password=session['password'], hovering_image=hovering_image)
 
 @app.route('/clear-session', methods=['POST'])
@@ -169,5 +178,5 @@ def get_password_response_video():
     })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5001)
+    app.run(host='0.0.0.0', debug=True, port=5000)
 
