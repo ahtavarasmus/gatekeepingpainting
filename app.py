@@ -127,7 +127,7 @@ def get_password_response_video():
         })
     
     return jsonify({
-        'video_url': '/static/go_away_now_v1.mp4',  # Make sure to place your second video in static folder
+        'video_url': '/static/refusal_try_again.mp4',  # Make sure to place your second video in static folder
         'password_correct': False
     })
 
