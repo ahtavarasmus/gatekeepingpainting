@@ -17,15 +17,10 @@ app.secret_key = os.urandom(24)  # Set a secret key for session management
 PASSWORDS = [
     "alohomora",    # Unlocking spell
     "lumos",        # Light spell
-    "wingardium",   # Levitation spell
     "expecto",      # Part of patronus spell
-    "accio",        # Summoning spell
-    "nox",          # Darkness spell
     "riddikulus",   # Anti-boggart spell
     "protego",      # Shield spell
     "leviosa",      # Part of levitation spell
-    "patronus",     # Protection spell
-    "stupefy",      # Stunning spell
     "expelliarmus", # Disarming spell
 ]
 
