@@ -109,10 +109,69 @@
             }, { once: true });                   // fire only once
 
             let hasCalledVideoApi = false;
+            let mediaRecorder = null;
+            let audioChunks = [];
+            
+            // Function to start recording audio
+            async function startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob);
+
+                        try {
+                            const response = await fetch('/generate_password_text', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const data = await response.json();
+                            console.log('Transcribed text:', data.text);
+                            // Pass the transcribed text to fetchPasswordResponseVideo
+                            fetchPasswordResponseVideo(data.text);
+                        } catch (error) {
+                            console.error('Error sending audio:', error);
+                        }
+                    };
+
+                    mediaRecorder.start();
+                    console.log('Started recording...');
+                    
+                    // Record for 4 seconds
+                    setTimeout(() => {
+                        if (mediaRecorder && mediaRecorder.state === 'recording') {
+                            mediaRecorder.stop();
+                            console.log('Stopped recording');
+                            // Stop all tracks to release the microphone
+                            stream.getTracks().forEach(track => track.stop());
+                        }
+                    }, 4000);
+                } catch (err) {
+                    console.error('Error accessing microphone:', err);
+                }
+            }
 
             // Function to reset the video and variables
             async function resetVideo() {
-                video.src = '/static/openning_v1.mp4';
+                // Check if it's the first time playing
+                const hasPlayed = localStorage.getItem('hasPlayedOpening');
+                
+                // Set the appropriate video source
+                video.src = hasPlayed ? '/static/openning_long.mp4' : '/static/openning_long.mp4';
+                
+                // If this is the first time, mark it as played
+                if (!hasPlayed) {
+                    localStorage.setItem('hasPlayedOpening', 'true');
+                }
+                
                 await video.load();
                 try {
                     await video.play();
@@ -123,9 +182,18 @@
             }
 
             // Function to fetch and switch to the next video
-            async function fetchPasswordResponseVideo() {
+            async function fetchPasswordResponseVideo(transcription) {
                 try {
-                    const response = await fetch('/get_password_response_video');
+                    // Send transcription to get video response
+                    const response = await fetch('/get_password_response_video', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            transcription: transcription
+                        })
+                    });
                     const data = await response.json();
                     
                     // Update video source and load new video
@@ -156,10 +224,10 @@
             // Listen for time updates on the video
             video.addEventListener('timeupdate', function() {
                 console.log('Current time:', video.currentTime);
-                if (video.currentTime >= 4 && !hasCalledVideoApi) {
-                    console.log('Switching video at  4 seconds');
+                if (video.currentTime >= 9 && !hasCalledVideoApi) {
+                    console.log('Starting audio recording at 9 seconds');
                     hasCalledVideoApi = true;
-                    fetchPasswordResponseVideo();
+                    startRecording();
                 }
             });
 
@@ -167,13 +235,16 @@
             video.addEventListener('loadedmetadata', function() {
                 console.log('Video duration:', video.duration);
             });
+
+            // Set initial video source
+            resetVideo();
         });
     </script>
 </head>
 <body>
     <div class="video-container">
         <video id="mainVideo" playsinline preload="auto">
-          <source src="/static/openning_v1.mp4" type="video/mp4">
+          <source src="" type="video/mp4">
           Your browser does not support the video tag.
         </video>
         <!-- 4️⃣  A full-screen overlay that the user taps/clicks -->
